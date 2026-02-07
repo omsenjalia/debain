@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  ollama:
+    container_name: debain
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: debain-node
+    restart: unless-stopped
+
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+
+    ports:
+      - "11434:11434"
+      - "18789:18789"
+
+    volumes:
+      - /DATA/AppData/debain:/home/dev/
+
+    tty: true
+    stdin_open: true
