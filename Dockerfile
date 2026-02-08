@@ -40,6 +40,15 @@ WORKDIR /workspace
 RUN mkdir -p /home/dev/.ollama && chown -R dev:dev /home/dev
 
 # --------------------
+# OpenClaw (install only, no config / no auto-start)
+# --------------------
+ENV CI=true
+ENV OPENCLAW_NO_CONFIG=1
+
+RUN curl -fsSL https://openclaw.ai/install.sh | bash && \
+    command -v openclaw >/dev/null 2>&1
+
+# --------------------
 # Entrypoint script
 # --------------------
 RUN echo '#!/usr/bin/env bash' > /entrypoint.sh && \
