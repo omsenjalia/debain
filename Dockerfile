@@ -1,28 +1,37 @@
-# 1. Use the official OpenClaw production image as our base
-# This already has the app installed, so we don't need package.json
-FROM ghcr.io/openclaw/openclaw:latest
+# --- STAGE 1: Grab OpenClaw binary ---
+FROM ghcr.io/openclaw/openclaw:latest AS openclaw_base
 
-USER root
+# --- STAGE 2: Build our actual image ---
+FROM debian:12-slim
 
-# 2. Install Ollama inside this image
-RUN apt-get update && apt-get install -y curl procps tini sudo && \
-    curl -fsSL https://ollama.com/install.sh | bash && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive \
+    OLLAMA_HOST=0.0.0.0
 
-# 3. Setup your 'dev' user and workspace
-RUN useradd -m -s /bin/bash dev || echo "User exists" && \
+# 1. Install System Essentials & Ollama
+RUN apt-get update && apt-get install -y \
+    curl ca-certificates tini procps sudo \
+    && curl -fsSL https://ollama.com/install.sh | bash \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 2. Setup user
+RUN useradd -m -s /bin/bash dev && \
     echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# 4. Copy your custom entrypoint into the image
+# 3. Copy OpenClaw from the first stage
+# This brings the app into our Debian environment
+COPY --from=openclaw_base /usr/local/bin/openclaw /usr/local/bin/openclaw
+COPY --from=openclaw_base /app /home/dev/openclaw/app
+
 WORKDIR /home/dev/openclaw
+
+# 4. Copy your entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# 5. Create the folders for your 128k context and workspace
+# 5. Final Setup
 RUN mkdir -p /home/dev/.openclaw /home/dev/openclaw/workspace /home/dev/.ollama && \
     chown -R dev:dev /home/dev
 
-# 6. Set the same ports
 EXPOSE 11434 18789
 
 USER dev
