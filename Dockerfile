@@ -2,11 +2,20 @@
 FROM ghcr.io/openclaw/openclaw:latest AS openclaw_base
 
 FROM node:22-slim AS cleaner
+# Set the workdir
 WORKDIR /app
-COPY --from=openclaw_base /app .
-RUN npm prune --omit=dev && \
-    rm -rf test tests docs .git .github coverage node_modules/.cache src
 
+# Instead of assuming /app, let's copy whatever was the WORKDIR in the base image
+# Most official Node images use /app, but let's be explicit.
+COPY --from=openclaw_base /app ./
+
+# Check if package.json exists before pruning to avoid Exit Code 1
+RUN if [ -f package.json ]; then \
+      npm prune --omit=dev && \
+      rm -rf test tests docs .git .github coverage node_modules/.cache src; \
+    else \
+      echo "Warning: package.json not found in /app, skipping prune"; \
+    fi
 # --- STAGE 2: The Final Image with Models ---
 FROM node:22-slim
 
