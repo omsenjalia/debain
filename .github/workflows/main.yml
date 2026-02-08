@@ -25,13 +25,12 @@ jobs:
           password: ${{ secrets.TOKEN }}
 
       # 3. Build & Push using your hardcoded tag
-      - name: Build & Push
+      - name: Build & push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          # ADD THIS LINE BELOW
+          context: . 
           push: true
-          tags: ghcr.io/omsenjalia/debain-node:latest
-          # This magic line uses GitHub's cache to skip 
-          # re-installing node_modules if they haven't changed!
+          tags: ghcr.io/omsenjalia/debain-node:latest         # re-installing node_modules if they haven't changed!
           cache-from: type=gha
           cache-to: type=gha,mode=max
