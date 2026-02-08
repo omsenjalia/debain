@@ -9,8 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
+      # 1. Setup Buildx for caching (prevents 5GB re-builds)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 2. Login using your Custom Secret
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -18,8 +24,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.TOKEN }}
 
-      - name: Build & push
+      # 3. Build & Push using your hardcoded tag
+      - name: Build & Push
         uses: docker/build-push-action@v5
         with:
+          context: .
           push: true
           tags: ghcr.io/omsenjalia/debain-node:latest
+          # This magic line uses GitHub's cache to skip 
+          # re-installing node_modules if they haven't changed!
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
