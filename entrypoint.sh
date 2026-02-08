@@ -10,5 +10,4 @@ ollama serve &
 sleep 2
 
 echo "🦞 Launching OpenClaw..."
-cd /home/dev/openclaw/app
 exec ollama launch openclaw --model gpt-oss:120b-cloud --bind 0.0.0.0
