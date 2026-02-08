@@ -1,18 +1,32 @@
-# --- STAGE 1: Grab OpenClaw files ---
+# --- STAGE 1: Grab OpenClaw & Clean it ---
 FROM ghcr.io/openclaw/openclaw:latest AS openclaw_base
 
-# --- STAGE 2: Final Build ---
-FROM debian:12-slim
+# Intermediate "Cleaner" stage
+# We use Node 22 to match the target runtime
+FROM node:22-slim AS cleaner
+WORKDIR /app
+
+# Copy the app from the source image
+COPY --from=openclaw_base /app .
+
+# ✂️ THE CLEANUP:
+# 1. Prune dev dependencies (removes compilers, test suites)
+# 2. Delete heavy source folders that aren't needed for running the bot
+RUN npm prune --production && \
+    rm -rf test tests docs .git .github coverage node_modules/.cache src
+
+# --- STAGE 2: The Final Slim Image ---
+FROM node:22-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     OLLAMA_HOST=0.0.0.0 \
-    OLLAMA_MODELS="/home/dev/.ollama"
+    # Add the local binary path so 'openclaw' command works anywhere
+    PATH="/home/dev/openclaw/app/node_modules/.bin:${PATH}"
 
-# 1. Install Essentials, Node.js, and Ollama
+# 1. Install System Essentials & Ollama
+# We don't need to install Node or NPM - they are already here!
 RUN apt-get update && apt-get install -y \
     curl ca-certificates tini procps sudo zstd \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
     && curl -fsSL https://ollama.com/install.sh | bash \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -20,28 +34,21 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -m -s /bin/bash dev && \
     echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# 3. Copy OpenClaw and create Symbolic Link
+# 3. Copy ONLY the cleaned app from the cleaner stage
 WORKDIR /home/dev/openclaw
-COPY --from=openclaw_base /app ./app
+COPY --from=cleaner /app ./app
+
+# 4. Create the global symlink manually to be 100% safe
 RUN ln -s /home/dev/openclaw/app/node_modules/.bin/openclaw /usr/local/bin/openclaw
 
-# 4. PRE-PULL MODELS (This is where the size explodes)
-# We start the server, pull, then kill the server to finalize the layer
-RUN ollama serve & sleep 5 && \
-    ollama pull gpt-oss:120b-cloud && \
-    ollama pull kimi-k2.5:cloud && \
-    ollama pull gpt-oss:20b-cloud && \
-    ollama pull deepseek-v3.1:671b-cloud && \
-    ollama pull glm-4.7:cloud && \
-    pkill ollama
-
-# 5. Finalize setup
+# 5. Final Setup
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && \
-    mkdir -p /home/dev/.openclaw /home/dev/openclaw/workspace && \
+    mkdir -p /home/dev/.openclaw /home/dev/openclaw/workspace /home/dev/.ollama && \
     chown -R dev:dev /home/dev
 
 EXPOSE 11434 18789
+
 USER dev
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/entrypoint.sh"]
