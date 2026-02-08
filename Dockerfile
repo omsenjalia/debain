@@ -45,8 +45,9 @@ RUN mkdir -p /home/dev/.ollama && chown -R dev:dev /home/dev
 ENV CI=true
 ENV OPENCLAW_NO_CONFIG=1
 
-RUN curl -fsSL https://openclaw.ai/install.sh | bash && \
-    command -v openclaw >/dev/null 2>&1
+RUN curl -fsSL https://openclaw.ai/install.sh \
+  | sed 's|/dev/tty|/dev/null|g' \
+  | bash
 
 # --------------------
 # Entrypoint script
