@@ -1,21 +1,14 @@
-# --- STAGE 1: Grab OpenClaw & Clean it ---
+# --- STAGE 1: Grab OpenClaw ---
 FROM ghcr.io/openclaw/openclaw:latest AS openclaw_base
 
 FROM node:22-slim AS cleaner
-# Set the workdir
 WORKDIR /app
+# Copy the app from the source image
+COPY --from=openclaw_base /app .
 
-# Instead of assuming /app, let's copy whatever was the WORKDIR in the base image
-# Most official Node images use /app, but let's be explicit.
-COPY --from=openclaw_base /app ./
-
-# Check if package.json exists before pruning to avoid Exit Code 1
-RUN if [ -f package.json ]; then \
-      npm prune --omit=dev && \
-      rm -rf test tests docs .git .github coverage node_modules/.cache src; \
-    else \
-      echo "Warning: package.json not found in /app, skipping prune"; \
-    fi
+# Manually delete junk without asking NPM. 
+# We keep node_modules but wipe the source/test/cache stuff to save space.
+RUN rm -rf test tests docs .git .github coverage node_modules/.cache src 2>/dev/null || true
 # --- STAGE 2: The Final Image with Models ---
 FROM node:22-slim
 
