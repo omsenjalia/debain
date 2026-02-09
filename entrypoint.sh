@@ -8,4 +8,3 @@ ollama serve &
 sleep 5
 
 echo "🦞 Launching OpenClaw..."
-exec openclaw gateway run --allow-unconfigured --bind lan --port 18789 
