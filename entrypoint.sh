@@ -8,3 +8,4 @@ ollama serve &
 sleep 5
 
 echo "🦞 Launching OpenClaw..."
+exec ollama serve
