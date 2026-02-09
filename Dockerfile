@@ -37,11 +37,15 @@ RUN ollama serve & sleep 20 && \
     ollama pull glm-4.7:cloud && \
     pkill ollama
 
-# 7. Final Setup
+# 7. Final Setup - Fixed Permissions
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && \
-    mkdir -p /home/dev/.openclaw /home/dev/workspace && \
-    chown -R dev:dev /home/dev
+    # Create directories first
+    mkdir -p /home/dev/.openclaw /home/dev/workspace /tmp/ollama-backups && \
+    # Give 'dev' ownership of the entire home directory and the backup temp folder
+    chown -R dev:dev /home/dev /tmp/ollama-backups && \
+    # Ensure read/write/execute permissions for the owner
+    chmod -R 755 /home/dev /tmp/ollama-backups
 
 EXPOSE 11434 18789
 USER dev
