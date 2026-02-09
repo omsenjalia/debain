@@ -8,4 +8,4 @@ ollama serve &
 sleep 5
 
 echo "🦞 Launching OpenClaw..."
-exec ollama launch openclaw --model gpt-oss:120b-cloud
+exec yes | ollama launch openclaw --model gpt-oss:120b-cloud
