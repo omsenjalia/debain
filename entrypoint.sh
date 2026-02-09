@@ -6,4 +6,4 @@ ls -la /home/dev/.openclaw
 # Start Ollama in background
 
 echo "🦞 Launching OpenClaw..."
-exec ollama serve &
+exec ollama serve 
