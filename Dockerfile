@@ -1,13 +1,19 @@
-# 1. Use the most efficient base image for Node/Debian
+# 1. Best efficient base
 FROM node:22-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     OLLAMA_HOST=0.0.0.0 \
     OLLAMA_MODELS="/home/dev/.ollama"
 
-# 2. Install System Essentials & Ollama
+# 2. Install System Essentials, OLLAMA, AND GIT
 RUN apt-get update && apt-get install -y \
-    curl ca-certificates tini procps sudo zstd \
+    curl \
+    ca-certificates \
+    tini \
+    procps \
+    sudo \
+    zstd \
+    git \
     && curl -fsSL https://ollama.com/install.sh | bash \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -15,11 +21,11 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -m -s /bin/bash dev && \
     echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# 4. Install OpenClaw globally (Your new preferred method)
-RUN npm i -g openclaw
+# 4. Update NPM and Install OpenClaw globally
+# Adding git support fixed the "enoent" error
+RUN npm install -g npm@latest && npm i -g openclaw
 
-# 5. Bake the Models (Runtime Pull inside Build)
-# We must start the engine, pull, then kill it to save the layer
+# 5. Bake the Models (This part will take a while!)
 RUN ollama serve & sleep 20 && \
     ollama pull gpt-oss:120b-cloud && \
     ollama pull kimi-k2.5:cloud && \
