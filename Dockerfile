@@ -30,11 +30,23 @@ RUN npm install -g pnpm && \
 
 # 6. Bake the Models (Warning: Massive downloads ahead)
 RUN ollama serve & sleep 20 && \
-    ollama pull gpt-oss:120b-cloud && \
-    ollama pull kimi-k2.5:cloud && \
-    ollama pull gpt-oss:20b-cloud && \
+    ollama pull qwen3-coder:48b-cloud && \
+    ollama pull gemma3:27b-cloud && \
+    ollama pull gemini-3-flash-preview:cloud && \
+    ollama pull devstral-2:12b-cloud && \
     ollama pull deepseek-v3.1:671b-cloud && \
+    ollama pull kimi-k2.5:cloud && \
+    ollama pull qwen3-coder-next:cloud && \
+    ollama pull rnj-1:8b-cloud && \
+    ollama pull glm-5:cloud && \
+    ollama pull nemotron-3-nano:30b-cloud && \
+    ollama pull ministral-3.3b-cloud && \
+    ollama pull minimax-m2.5:cloud && \
     ollama pull glm-4.7:cloud && \
+    ollama pull devstral-small-2:24b-cloud && \
+    ollama pull qwen3-next:80b-cloud && \
+    ollama pull gpt-oss:20b-cloud && \
+    ollama pull gpt-oss:120b-cloud && \
     pkill ollama
 
 # 7. Final Setup - Fixed Permissions
